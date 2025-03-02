@@ -37,3 +37,10 @@ We are also given this picture
 > If you consider yourself real OSINTers — stalk her.
 
 > Author: cooker
+
+
+## Samurai’s Code
+
+> Unveil the lost code of the Samurai and unlock the mystery hidden within.
+
+file: [samurai.zip](/assets//files/apoorvctf/samurai.zip)
