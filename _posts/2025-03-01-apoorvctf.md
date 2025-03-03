@@ -17,6 +17,22 @@ The zip folder we are given contains two files once we extract all of them out
 
 ![extracted-phantom.zip](/assets/img/ctf/apoorvctf/extracted-phantom.png)
 
+Lookuping up what .bmc file is,
+> BMC file is Cached bitmap file created by the Windows Remote Desktop Client (RDC), which is part of Windows Terminal Services; stores multiple bitmaps that would otherwise be repeatedly sent from the terminal server to the client.
+> by: https://fileinfo.com/extension/bmc
+
+Essentially, it's a bunch of cached bitmaps (images) files.
+
+Digging around the Internet, I found a [github repository](https://github.com/ANSSI-FR/bmc-tools) that can parse RDP Bitmap Cache. Now we just have to download the python script and run it.
+` python ./bmc-tools.py -s . -d output`
+This will return all our output in a output directory
+
+When we open the output directory, the following will be shown
+
+![phantom.png](/assets/img/ctf/apoorvctf/phantom.png)
+
+We can then rearrange from the bitmap files to get the flags
+
 
 ## I Love Japan: Identity Game [OSINT]
 
