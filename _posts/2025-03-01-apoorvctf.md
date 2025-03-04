@@ -61,22 +61,31 @@ Searching in the Discord server, we find a user with the display name "sakura fl
 ![sakura-flakes.png](/assets/img/ctf/apoorvctf/sakura-flakes.png)
 
 Viewing her profile, we can see that she has her Reddit account linked.
+
 ![sakura-profile.png](/assets/img/ctf/apoorvctf/sakura-profile.png)
 
 Looking through her Reddit profile, we see ALOT of ranting, which is funny but one thing in particular caught my eye.
+
 ![sakura-post.png](/assets/img/ctf/apoorvctf/sakura-post.png)
 
 She mentioned some python project about tasty sakura thing, so let's take a look at that. We quickly found a Github profile that match what we are looking for. (Recall KriticalBug as her username and tasty-sakura-things as the project she is working on)
+
 ![kritical-bug.png](/assets/img/ctf/apoorvctf/kritical-bug.png)
 
 Then, we look through her projects along with all the commit history. We find an interesting function under `Commit 3e45879`...
+
 ![validate-flag.png](/assets/img/ctf/apoorvctf/validate-flag.png)
 
+
 Going through the subsequent commit, `Commit 6fc46c4` shows a leaked API key, which is exactly what we need.
+
 ![api-key.png](/assets/img/ctf/apoorvctf/api-key.png)
 
+
 We now visit http://sakura.apoorvctf.xyz:5050/?apiKey=92872d789c838a2bdc523a8de5e54749 with the API key and the flag will be returned.
+
 ![sakura-flag.png](/assets/img/ctf/apoorvctf/sakura-flag.png)
+
 
 ## Samurai’s Code
 
