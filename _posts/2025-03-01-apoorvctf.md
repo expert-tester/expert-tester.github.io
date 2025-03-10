@@ -10,7 +10,7 @@ image: /assets/img/ctf/apoorvctf/ApoorvCTF2025.png
 ## Phantom Connection [Forensics]
 
 > Like a fleeting dream, a connection once existed but has faded into the void. Only shadows of its presence remain. Can you bring it back to light?
-> 
+
 > **File**: [phantom.zip](/assets/files/apoorvctf/phantom.zip)
 
 The zip folder we are given contains two files once we extract all of them out.
@@ -19,7 +19,7 @@ The zip folder we are given contains two files once we extract all of them out.
 
 Lookuping up what .bmc file is,
 > BMC file is Cached bitmap file created by the Windows Remote Desktop Client (RDC), which is part of Windows Terminal Services; stores multiple bitmaps that would otherwise be repeatedly sent from the terminal server to the client.
-> 
+
 > By: https://fileinfo.com/extension/bmc
 
 Essentially, it's a bunch of cached bitmaps (images) files.
@@ -100,7 +100,7 @@ We now visit http://sakura.apoorvctf.xyz:5050/?apiKey=92872d789c838a2bdc523a8de5
 ## Samurai’s Code
 
 > Unveil the lost code of the Samurai and unlock the mystery hidden within.
->
+
 > **File**: [samurai.zip](/assets//files/apoorvctf/samurai.zip)
 
 After we extracted all the files/folders, we see a sam.jpg. We can use binwalk to see if there's any embedded files inside the jpeg.

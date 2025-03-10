@@ -5,4 +5,4 @@ order: 4
 ---
 
 ## About Me
-A passionate beginner CTF player.s
+A passionate beginner CTF player.
