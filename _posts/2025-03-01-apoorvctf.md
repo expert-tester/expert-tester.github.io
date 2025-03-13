@@ -100,7 +100,7 @@ We now visit http://sakura.apoorvctf.xyz:5050/?apiKey=92872d789c838a2bdc523a8de5
 ## Samurai’s Code
 
 > Unveil the lost code of the Samurai and unlock the mystery hidden within.
-
+>
 > **File**: [samurai.zip](/assets//files/apoorvctf/samurai.zip)
 
 After we extracted all the files/folders, we see a sam.jpg. We can use binwalk to see if there's any embedded files inside the jpeg.
