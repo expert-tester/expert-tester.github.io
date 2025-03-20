@@ -4,7 +4,7 @@ date: 2025-03-19 23:00:00
 categories: [Writeups, ctf-online]
 tags: [Reverse-Engineering, Cryptography]
 description: Some writupes for challenges in Reverse Engineering, Cryptography and Miscellaneous
-image: /assets/ctf/pascalctf/pascalctf.png
+image: /assets/img/ctf/pascalctf/pascalctf.png
 ---
 
 ## X-Ray [Reverse-Engineering]
@@ -114,7 +114,7 @@ We will then get the flag, which we wrap it with `pascalCTF{}`.
 >
 > My friend Elia forgot how to write, can you help him recover his flag??
 
-> **File**: [output.txt](/assets/files/pascalctf/romans_output.txt) [romans_empire.py](/assets/files/pascalctf/romans_empire.py)
+> **File**: [output.txt](/assets/files/pascalctf/romans_output.txt), [romans_empire.py](/assets/files/pascalctf/romans_empire.py)
 
 We are given an output.txt with an encrypted string with a python source file. Looking at the python file, we can see that what it does is randomly rotate by a number X to encode the flag with ROT X.
 
