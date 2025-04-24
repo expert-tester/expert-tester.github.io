@@ -18,7 +18,7 @@ image: /assets/img/ctf/pascalctf/pascalctf.png
 
 First we analyze the x-ray file using any reverse engineering tools, in this case we are using Radare 2. We run Radare 2 using `r2 x-ray`, then `aaa` to analyze the file, then list out all functions using `afl`. Finally we print out the disassesmbled function of checkSignature using `pdf@sym.checkSignature`. Output is shown below:
 
-```
+```shell
 └─$ r2 x-ray
 Warning: run r2 with -e bin.cache=true to fix relocations in disassembly
 [0x00001080]> aaa
@@ -162,4 +162,224 @@ for key in range(1, len(alphabet)):
         print(f"key: {key}")
         print(f"flag: {flag}")
         break
+```
+
+## MindBlowing [Cryptography]
+
+> Author: AlBovo
+>
+> My friend Marco recently dived into studying bitwise operators, and now he's convinced he's invented pseudorandom numbers! Could you help me figure out his secrets?
+
+> **File**: ["mindblowing.py"](/assets/files/pascalctf/mindblowing.py)
+
+Looing through the code, we can see that it first initializes a list of `SENTENCES`. The list contains: 
+1. hardcoded message
+2. random 42 bytes
+3. flag (redacted)
+
+```python
+SENTENCES = [
+    b"Elia recently passed away, how will we be able to live without a sysadmin?!!?",
+    os.urandom(42),
+    os.getenv('FLAG', 'pascalCTF{REDACTED}').encode()
+]
+```
+
+Then, we see another function called `generate()` that will return a list of integers based on the `seeds` and the `idx` (index). We will explain this function in depth since this is a crucial function for solving the challenge. 
+
+```python
+def generate(seeds: list[int], idx: int) -> list[int]:
+    result = []
+    if idx < 0 or idx > 2:
+        return result
+    encoded = int.from_bytes(SENTENCES[idx], 'big')
+    for bet in seeds:
+        # why you're using 1s when 0s exist
+        if bet.bit_count() > 40:
+            continue
+        result.append(encoded & bet)
+
+    return result
+```
+
+First, the `generate()` function initializes a list, then return empty when the index is out of range (`idx < 0` or `idx > 2`).
+
+```python
+    result = []
+    if idx < 0 or idx > 2:
+        return result
+```
+
+Then, it will get the sentence from the `SENTENCES` list based on the index, and convert it into an integer.
+
+```python
+encoded = int.from_bytes(SENTENCES[idx], 'big')
+```
+
+After that, it will iterates through the `seeds` list, then it will count the number of 1s in the binary form of `bet`. If the number of 1s in `bet` is higher than 40, it will ignore `bet`, else it will performs a bitwise AND between `encoded` and `bet`, then append the result to `result`.
+
+```python
+    for bet in seeds:
+        # why you're using 1s when 0s exist
+        if bet.bit_count() > 40:
+            continue
+        result.append(encoded & bet)
+```
+
+Lastly, the `result` list will be returned.
+
+```python
+return result
+```
+
+Next up, we have `menu()` function that displays the menu and `handler()` function that define a timeout handler that prints "Time's up!". Then, comes the main execution part. Since we know the last sentence is the flag, when ask index of the sentence, we will enter `2`. As for the number of seeds, we will enter `1` so that we can control have more control.
+
+```python
+if __name__ == '__main__':
+    signal.signal(signal.SIGALRM, handler)
+    signal.alarm(300) # set timeout of 300 seconds
+    while True:
+        choice = menu()
+
+        try:
+            if choice == '1':
+                idx = int(input('Gimme the index of a sentence: '))
+                seeds_num = int(input('Gimme the number of seeds: '))
+                seeds = []
+                for _ in range(seeds_num):
+                    seeds.append(int(input(f'Seed of the number {_+1}: ')))
+                print(f"Result: {generate(seeds, idx)}")
+            elif choice == '2':
+                break
+            else:
+                print("Wrong choice (。_。)")
+        except:
+            print("Boh ㄟ( ▔, ▔ )ㄏ")
+```
+
+First we must know that the resultant for AND operations (`&`) will be 1 (true) if both inputs are 1, therefore, when we perform `AnyNumber & 1111`, the resultant will be `AnyNumber`. Hence, what we need to do here is the same, supply as many 1s as we can as the seed to get back the flag. However, we need to take note that the number of 1s for the seed cannot be higher than 40. We can use `pwntools` to help us do the automation. We can use `11111111`, which is 255 in decimal to get the flag by byte. We then bitshift the `11111111` by 8 to get the next byte.
+
+```python
+from pwn import *
+
+p = process(['python', 'mindblowing.py'])
+
+payload = 255
+flag = ''
+
+for i in range(20):
+    p.recvuntil('> ')
+    p.sendline('1'.encode())
+    p.recvuntil('Gimme the index of a sentence: ')
+    p.sendline('2'.encode())
+    p.recvuntil('Gimme the number of seeds: ')
+    p.sendline('1'.encode())
+    p.recvuntil('Seed of the number 1: ')   
+
+    p.sendline(str(payload).encode())
+    response = p.readline()
+    byte_num = response.split('['.encode())[-1].split(']'.encode())[0]
+    int_num = int(byte_num.decode('ascii'))
+    ascii = int_num.to_bytes((int_num.bit_length() + 7) // 8)
+    flag += ''.join(chr(b) for b in ascii.rstrip(b'\x00'))
+    payload = payload << 8
+
+print('Flag: ', flag[::-1])
+p.close()
+```
+
+## My favourite number [Cryptography]
+
+> Author: DavideGianessi
+>
+> Alice and Bob are playing a fun game, can you guess Alice's f
+> avourite number too?
+
+> **File**: [myfavourite.py](/assets/files/pascalctf/myfavourite.py), [output.txt](/assets/files/pascalctf/output.txt)
+
+First, we look through the python file and see what it does. We are given a constant `e`, `p`, `q`, and `n` of both alice and bob. We can quickly conclude this is related to RSA..., which actually isn't what we should do here. Analyzing the sendToAlice() and sendToBob() function, it encode the byte strings into long integer, then encrypts it by raising the power of `pt` by `e`, then applying modulus of `n`. (pt ^ e mod n)
+
+```python
+def sendToAlice(msg):
+    pt = bytes_to_long(msg.encode())
+    assert pt < alice_n
+    ct = pow(pt, e, alice_n)
+    print(f"bob: {ct}")
+
+def sendToBob(msg):
+    pt = bytes_to_long(msg.encode())
+    assert pt < bob_n
+    ct = pow(pt, e, bob_n)
+    print(f"alice: {ct}")
+```
+Then, the flag is encoded from a byte string into a long integer, which is set as alice favourite number after that. alice favourite number is asserted to make sure it is smaller than 2 ^ 50. Alice will first send the message which is then encrypted.
+
+```python
+alice_favourite_number = bytes_to_long(FLAG.encode())
+assert alice_favourite_number < 2**500
+
+sendToBob("let's play a game, you have to guess my favourite number")
+```
+We are given upperbound and lowerbound. Then, while the upperbound substracted by lowerbound is larger than 1, it will find out the mid point between upper and lower bound. If the flag (alice favourite number) is larger than mid point, the lowerbound will become the new mid point. If the flag is smaller than mid point, the upperbound will become the new mid point. This is actually a binary search implementation. Since we are given a lot of information on what the porgram does, therefore what we can do is reimplement the same thing to try and get the same output as the output.txt.
+
+```python
+upperbound = 2**501
+lowerbound = 0
+while upperbound - lowerbound > 1:
+    mid = (upperbound + lowerbound) // 2
+    sendToAlice(f"Is your number greater than {mid}?")
+    if alice_favourite_number > mid:
+        sendToBob(f"Yes!, my number is greater than {mid}")
+        lowerbound = mid
+    else:
+        sendToBob(f"No!, my number is lower or equal to {mid}")
+        upperbound = mid
+
+sendToAlice(f"so your number is {upperbound}?")
+assert upperbound == alice_favourite_number
+sendToBob("yes it is!")
+sendToAlice("that's a pretty cool number")
+```
+First we set all the constant used (`n`, `e`, `upperbound`, `lowerbound`). Then, we look for alice response to see if the response is `Is your number greater than {mid}` or `No!, my number is lower or equal to {mid}` by repeating the binary search. Finally, after the binary search is done, we will get back alice favourite number, which is the flag.
+
+```python
+from Crypto.Util.number import long_to_bytes, bytes_to_long
+
+upperbound = 2**501
+lowerbound = 0
+mid = (upperbound + lowerbound) // 2
+
+alice_n = 170764...622497
+bob_n = 240139...330313
+e=65537
+
+def sendToBob(msg):
+    pt = bytes_to_long(msg.encode())
+    return pow(pt, e, bob_n)
+
+with open("output.txt", "r") as f:
+    response_number = 0
+    for line in f:
+        line = line.strip()
+        if response_number < 7:
+            response_number += 1
+            continue
+        if line[0:5] == "alice":
+            response = int(line.split(": ")[-1])
+            possible1 = sendToBob(f"Yes!, my number is greater than {mid}")
+            possible2 = sendToBob(f"No!, my number is lower or equal to {mid}")
+
+            if response == possible1:
+                lowerbound = mid
+            elif response == possible2:
+                upperbound = mid
+            else:
+                print("Error")
+
+            if (upperbound - lowerbound) == 1:
+                continue
+
+            mid = (upperbound + lowerbound) // 2
+
+    print(f"Flag number = {long_to_bytes(mid)}")
 ```
